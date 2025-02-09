@@ -1,0 +1,197 @@
+{
+    "name": "pl_transform_formula1_data",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get Folder Details",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "dataset_formula_raw",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "p_window_end_date": {
+                                "value": "@pipeline().parameters.p_window_end_date",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "fieldList": [
+                        "exists"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobFSReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "JsonReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "If Folder Exists",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Get Folder Details",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(activity('Get Folder Details').output.exists,true)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "trans race results",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Formula1/trans/race_results",
+                                "baseParameters": {
+                                    "p_file_date": {
+                                        "value": "@formatDateTime(pipeline().parameters.p_window_end_date,'yyyy-MM-dd')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks_ls",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "trans driver standing",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "trans race results",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Formula1/trans/drivers_standing",
+                                "baseParameters": {
+                                    "p_file_date": {
+                                        "value": "@formatDateTime(pipeline().parameters.p_window_end_date,'yyyy-MM-dd')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks_ls",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "trans constructor standing",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "trans race results",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Formula1/trans/constructor_Standing",
+                                "baseParameters": {
+                                    "p_file_date": {
+                                        "value": "@formatDateTime(pipeline().parameters.p_window_end_date,'yyyy-MM-dd')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks_ls",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "trans calculated race results",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Formula1/trans/calculated_race_results",
+                                "baseParameters": {
+                                    "p_file_date": {
+                                        "value": "@formatDateTime(pipeline().parameters.p_window_end_date,'yyyy-MM-dd')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "Databricks_ls",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "concurrency": 1,
+        "parameters": {
+            "p_window_end_date": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "v_data_source": {
+                "type": "String",
+                "defaultValue": "Ergast"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-01-30T06:07:07Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
